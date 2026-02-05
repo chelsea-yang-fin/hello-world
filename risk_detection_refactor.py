@@ -16,6 +16,31 @@ import requests
 from sklearn.metrics import confusion_matrix
 
 # -----------------------------
+# User Config (edit here once)
+# -----------------------------
+DEFAULT_INPUT_PATH = (
+    "/apdcephfs/ycx4/apdcephfs_nj7/share_303360414/chunxueyang/Reflection/Test_sample.xlsx"
+)
+DEFAULT_SHEET_NAME = "评测集_0915"
+DEFAULT_OUTPUT_PATH_TEMPLATE = (
+    "/apdcephfs/share/apdcephfs_nj7/share_303360414/apdcephfs_nj7/share_303360414/"
+    "chunxueyang/Reflection/risk_detection_results_v{version}.xlsx"
+)
+DEFAULT_MODEL_NAME = "Qwen2.5-72B-Instruct"
+DEFAULT_TEMPERATURE = 0.1
+DEFAULT_REPETITION_PENALTY = 1.05
+DEFAULT_MAX_TOKENS = 800
+DEFAULT_MAX_WORKERS = 5
+DEFAULT_REQUEST_TIMEOUT = 60
+DEFAULT_MAX_RETRIES = 2
+DEFAULT_BACKOFF_BASE = 1.0
+DEFAULT_QPS = None
+DEFAULT_NAMESPACE = "Development"
+DEFAULT_SERVICE_NAME = "trpc.fdd_llm.llm_model.HttpService"
+DEFAULT_URL = None
+DEFAULT_STRICT_LABELS = False
+
+# -----------------------------
 # LLM Integration Setup
 # -----------------------------
 try:
@@ -105,22 +130,22 @@ PROMPT_TEMPLATE = """
 
 @dataclass
 class AppConfig:
-    input_path: str
-    sheet_name: str
-    output_path_template: str
-    model_name: str = "Qwen2.5-72B-Instruct"
-    temperature: float = 0.1
-    repetition_penalty: float = 1.05
-    max_tokens: int = 800
-    max_workers: int = 5
-    request_timeout: int = 60
-    max_retries: int = 2
-    backoff_base: float = 1.0
-    qps: Optional[float] = None
-    namespace: str = "Development"
-    service_name: str = "trpc.fdd_llm.llm_model.HttpService"
-    url: Optional[str] = None
-    strict_labels: bool = False
+    input_path: str = DEFAULT_INPUT_PATH
+    sheet_name: str = DEFAULT_SHEET_NAME
+    output_path_template: str = DEFAULT_OUTPUT_PATH_TEMPLATE
+    model_name: str = DEFAULT_MODEL_NAME
+    temperature: float = DEFAULT_TEMPERATURE
+    repetition_penalty: float = DEFAULT_REPETITION_PENALTY
+    max_tokens: int = DEFAULT_MAX_TOKENS
+    max_workers: int = DEFAULT_MAX_WORKERS
+    request_timeout: int = DEFAULT_REQUEST_TIMEOUT
+    max_retries: int = DEFAULT_MAX_RETRIES
+    backoff_base: float = DEFAULT_BACKOFF_BASE
+    qps: Optional[float] = DEFAULT_QPS
+    namespace: str = DEFAULT_NAMESPACE
+    service_name: str = DEFAULT_SERVICE_NAME
+    url: Optional[str] = DEFAULT_URL
+    strict_labels: bool = DEFAULT_STRICT_LABELS
 
 
 class RateLimiter:
@@ -549,46 +574,29 @@ def parse_args() -> AppConfig:
     parser = argparse.ArgumentParser(description="LLM 风险检测")
     parser.add_argument(
         "--input-path",
-        default="/apdcephfs/ycx4/apdcephfs_nj7/share_303360414/chunxueyang/Reflection/Test_sample.xlsx",
+        default=DEFAULT_INPUT_PATH,
     )
-    parser.add_argument("--sheet-name", default="评测集_0915")
+    parser.add_argument("--sheet-name", default=DEFAULT_SHEET_NAME)
     parser.add_argument(
         "--output-path-template",
-        default="/apdcephfs/share/apdcephfs_nj7/share_303360414/apdcephfs_nj7/share_303360414/chunxueyang/Reflection/risk_detection_results_v{version}.xlsx",
+        default=DEFAULT_OUTPUT_PATH_TEMPLATE,
     )
-    parser.add_argument("--model-name", default="Qwen2.5-72B-Instruct")
-    parser.add_argument("--temperature", type=float, default=0.1)
-    parser.add_argument("--repetition-penalty", type=float, default=1.05)
-    parser.add_argument("--max-tokens", type=int, default=800)
-    parser.add_argument("--max-workers", type=int, default=5)
-    parser.add_argument("--request-timeout", type=int, default=60)
-    parser.add_argument("--max-retries", type=int, default=2)
-    parser.add_argument("--backoff-base", type=float, default=1.0)
-    parser.add_argument("--qps", type=float, default=None)
-    parser.add_argument("--namespace", default="Development")
-    parser.add_argument("--service-name", default="trpc.fdd_llm.llm_model.HttpService")
-    parser.add_argument("--url", default=None)
-    parser.add_argument("--strict-labels", action="store_true")
+    parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
+    parser.add_argument("--temperature", type=float, default=DEFAULT_TEMPERATURE)
+    parser.add_argument("--repetition-penalty", type=float, default=DEFAULT_REPETITION_PENALTY)
+    parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
+    parser.add_argument("--max-workers", type=int, default=DEFAULT_MAX_WORKERS)
+    parser.add_argument("--request-timeout", type=int, default=DEFAULT_REQUEST_TIMEOUT)
+    parser.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES)
+    parser.add_argument("--backoff-base", type=float, default=DEFAULT_BACKOFF_BASE)
+    parser.add_argument("--qps", type=float, default=DEFAULT_QPS)
+    parser.add_argument("--namespace", default=DEFAULT_NAMESPACE)
+    parser.add_argument("--service-name", default=DEFAULT_SERVICE_NAME)
+    parser.add_argument("--url", default=DEFAULT_URL)
+    parser.add_argument("--strict-labels", action="store_true", default=DEFAULT_STRICT_LABELS)
 
     args = parser.parse_args()
-    return AppConfig(
-        input_path=args.input_path,
-        sheet_name=args.sheet_name,
-        output_path_template=args.output_path_template,
-        model_name=args.model_name,
-        temperature=args.temperature,
-        repetition_penalty=args.repetition_penalty,
-        max_tokens=args.max_tokens,
-        max_workers=args.max_workers,
-        request_timeout=args.request_timeout,
-        max_retries=args.max_retries,
-        backoff_base=args.backoff_base,
-        qps=args.qps,
-        namespace=args.namespace,
-        service_name=args.service_name,
-        url=args.url,
-        strict_labels=args.strict_labels,
-    )
+    return AppConfig(**vars(args))
 
 
 def main() -> None:
