@@ -120,7 +120,6 @@ class AppConfig:
     namespace: str = "Development"
     service_name: str = "trpc.fdd_llm.llm_model.HttpService"
     url: Optional[str] = None
-    use_mock: bool = False
     strict_labels: bool = False
 
 
@@ -393,27 +392,6 @@ def detect_all_risks_with_llm(
     return df
 
 
-def mock_llm_detection(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    df["pred_极端客诉"] = 0
-    df["pred_内容安全"] = 0
-    df["pred_多轮纠缠"] = 0
-
-    for idx in df.index:
-        if random.random() < 0.3:
-            df.loc[idx, "pred_极端客诉"] = 1
-        if random.random() < 0.2:
-            df.loc[idx, "pred_内容安全"] = 1
-        if "multi_round" in df.columns:
-            if random.random() < 0.4 and df.loc[idx, "multi_round"] == 1:
-                df.loc[idx, "pred_多轮纠缠"] = 1
-        else:
-            if random.random() < 0.4:
-                df.loc[idx, "pred_多轮纠缠"] = 1
-
-    return df
-
-
 def compute_metrics(y_true: pd.Series, y_pred: pd.Series) -> Dict[str, float]:
     tp = ((y_pred == 1) & (y_true == 1)).sum()
     fp = ((y_pred == 1) & (y_true == 0)).sum()
@@ -549,15 +527,10 @@ def print_summary(df: pd.DataFrame, output_file: str) -> None:
 
 def run_pipeline(config: AppConfig) -> None:
     df = pd.read_excel(config.input_path, sheet_name=config.sheet_name)
-
-    if config.use_mock:
-        logging.info("⚠️  使用 mock 结果进行测试")
-        df = mock_llm_detection(df)
-    else:
-        llm_server = LLMServerParallel(config)
-        df = detect_all_risks_with_llm(
-            df, llm_server, max_workers=config.max_workers, max_tokens=config.max_tokens
-        )
+    llm_server = LLMServerParallel(config)
+    df = detect_all_risks_with_llm(
+        df, llm_server, max_workers=config.max_workers, max_tokens=config.max_tokens
+    )
 
     df["pred_bad"] = (
         (df["pred_极端客诉"] == 1)
@@ -595,7 +568,6 @@ def parse_args() -> AppConfig:
     parser.add_argument("--namespace", default="Development")
     parser.add_argument("--service-name", default="trpc.fdd_llm.llm_model.HttpService")
     parser.add_argument("--url", default=None)
-    parser.add_argument("--use-mock", action="store_true")
     parser.add_argument("--strict-labels", action="store_true")
 
     args = parser.parse_args()
@@ -615,7 +587,6 @@ def parse_args() -> AppConfig:
         namespace=args.namespace,
         service_name=args.service_name,
         url=args.url,
-        use_mock=args.use_mock,
         strict_labels=args.strict_labels,
     )
 
